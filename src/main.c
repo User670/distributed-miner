@@ -19,10 +19,22 @@ The chunk of data to be hashed will be in this format:
 4 bytes, difficulty. We'll use 0x1e03a307
 4 bytes, nonce.
 
-Everything is in little endian, eg. version number will be
-02 00 00 00, not 00 00 00 02, and the previous block hash will
-have the chunks of zeros at the end.
+// Everything is in little endian, eg. version number will be
+// 02 00 00 00, not 00 00 00 02, and the previous block hash will
+// have the chunks of zeros at the end.
+Per Olivier's advice from last semester: screw it, I'll just have
+the compiler decide whatever format works
+
 */
+
+struct bitcoin_header{
+    int version;
+    char previous_block_hash[32];
+    char this_block_hash[32];
+    int timestamp;
+    int difficulty;
+    int nonce;
+};
 
 //the integer 2, in little endian
 const char version_number[4]={0x02, 0x00, 0x00, 0x00};
@@ -100,12 +112,12 @@ void debug_print_hex(const unsigned char* buffer, int size){
 
 int main(){
 	//testing int to little endian bytes
-	char* int2bytes[4];
+	/*char* int2bytes[4];
 	int_to_little_endian_bytes(2, int2bytes);
-	debug_print_hex(int2bytes,4);
+	debug_print_hex(int2bytes,4);*/
 
 	//testing construct header
-	printf("\n1");
+	/*printf("\n1");
 	char hash1[]={
 		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 		0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
@@ -125,5 +137,28 @@ int main(){
 		2147483647,
 		header
 	);
-	debug_print_hex(header, 80);
+	debug_print_hex(header, 80);*/
+    
+    char hash1[]={
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+		0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+		0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+		0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38
+	};
+    
+    // re-test contruct header, this time with a struct
+    bitcoin_header* my_header = malloc(sizeof(bitcoin_header));
+    
+    my_header->version=2;
+    memcpy(&(my_header->previous_block_hash), &hash1, 32);
+    memcpy(&(my_header->this_block_hash),     &hash1, 32);
+    my_header->timestamp=12345;
+    my_header->difficulty=0x1e03a307;
+    my_header->nonce=0;
+    
+    print("Size of bitcoin_header: %d\n", sizeof(bitcoin_header));
+    debug_print_hex(my_header, sizeof(bitcoin_header));
+    char* debug_sha=malloc(32);
+    dsha(my_header, sizeof(bitcoin_header), debug_sha);
+    debug_print_hex(debug_sha, 32);
 }
